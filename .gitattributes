@@ -1,0 +1,76 @@
+
+#Figure 1 and 2
+
+# Parameters
+r.values <- seq(0.2, 3.5, length.out = 101) # r-values examined
+K <- 20 # Carrying Capacity
+Tmax <- 500 # Length of simulations
+N <- matrix(0, length(r.values), Tmax) # Pre-allocate N
+N[,1] <- 1 # Initiate all N[1] = 1
+
+# Initialize vectors to store maximum sustainable yield and stability
+max_harvest_yield <- numeric(length(r.values))
+population_stability <- logical(length(r.values))
+
+# Simulating population dynamics with logistic growth model
+for (i in 1:length(r.values)) {
+  r <- r.values[i] # Select the i-th r-value to examine
+  for (t in 1:(Tmax-1)) {
+    # Adding harvesting factor midway through the simulation
+    if (t == Tmax/2) {
+      harvest_rate <- 0.6 # Updated harvest rate to 0.6
+      N[i, t] <- N[i, t] * (1 - harvest_rate) # Apply harvesting
+    }
+    N[i, t+1] <- N[i, t] + r * N[i, t] * (1 - N[i, t] / K)
+  }
+  
+  # Calculate maximum sustainable harvest yield
+  max_harvest_yield[i] <- max(N[i, Tmax])
+  
+  # Assess population stability
+  population_stability[i] <- var(N[i, (Tmax-100):Tmax]) < 1
+}
+
+# Bifurcation plot for logistic growth model with harvesting
+matplot(r.values, N[, 401:500], pch = 16, cex = 0.25, xlab = "r-value", ylab = "Population size over time")
+
+# Print maximum sustainable harvest yield and stability
+cat("Maximum Sustainable Harvest Yield:", max_harvest_yield, "\n")
+cat("Population Stability:", population_stability, "\n")
+
+# Discuss implications based on results
+# For example:
+# - Harvest yield increases with r-values but may compromise population stability.
+# - A balance between harvest rate and population growth is crucial for sustainable harvesting.
+# - Policies regulating harvest rates should consider both economic benefits and ecological sustainability.
+
+
+
+#Figure 3
+
+# Parameters
+r <- 1  # Constant intrinsic growth rate
+K <- 20  # Carrying Capacity
+Tmax <- 500  # Length of simulations
+harvest_rates <- seq(0, 1, by = 0.01)  # Harvesting rates examined
+N <- matrix(0, length(harvest_rates), Tmax)  # Pre-allocate N
+N[, 1] <- 1  # Initiate all N[1] = 1
+var_threshold <- 1  # Variance threshold to determine population stability
+
+# Simulating population dynamics with logistic growth model and varying harvesting rates
+for (i in 1:length(harvest_rates)) {
+  harvest_rate <- harvest_rates[i]  # Select the i-th harvesting rate to examine
+  for (t in 1:(Tmax - 1)) {
+    N[i, t + 1] <- N[i, t] * (1 - harvest_rate) + r * N[i, t] * (1 - N[i, t] / K)
+  }
+}
+
+# Calculate population stability
+population_stability <- apply(N, 1, function(x) var(x[(Tmax - 100):Tmax]) < var_threshold)
+
+# Print population stability and differences
+print(population_stability)
+print(diff(population_stability))
+
+# Bifurcation plot for logistic growth model with varying harvesting rates
+matplot(harvest_rates, N[, 401:500], pch = 16, cex = 0.25, xlab = "Harvesting Rate", ylab = "Population size over time")
